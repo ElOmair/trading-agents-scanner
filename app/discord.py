@@ -39,6 +39,32 @@ def send_trade_alert(idea: TradeIdea):
     r.raise_for_status()
 
 
+def send_crypto_alert(idea: TradeIdea):
+    webhook = settings.crypto_discord_webhook_url
+    if settings.dry_run or not webhook:
+        print("CRYPTO:", render_text(idea))
+        return
+    embed = {
+        "title": f"🪙 {idea.score:.0f}/100 — {idea.symbol} {idea.direction}",
+        "description": f"**{idea.setup}** • **{idea.status}** • 24/7 crypto scanner",
+        "color": _color(idea.score),
+        "fields": [
+            {"name":"Current","value":f"${idea.current_price:,.4f}","inline":True},
+            {"name":"Entry","value":f"${idea.entry_low:,.4f} – ${idea.entry_high:,.4f}","inline":True},
+            {"name":"Stop","value":f"${idea.stop:,.4f}","inline":True},
+            {"name":"Target 1","value":f"${idea.target1:,.4f}","inline":True},
+            {"name":"Target 2","value":f"${idea.target2:,.4f}","inline":True},
+            {"name":"R:R","value":f"{idea.rr1:.1f}:1 / {idea.rr2:.1f}:1","inline":True},
+            {"name":"Technical","value":f"{idea.technical_score:.0f}","inline":True},
+            {"name":"Momentum","value":f"{idea.momentum_score:.0f}","inline":True},
+            {"name":"Entry quality","value":f"{idea.entry_location_score:.0f}","inline":True},
+        ],
+        "footer": {"text": "Research signal only — no crypto order was placed"},
+        "timestamp": datetime.utcnow().isoformat(),
+    }
+    httpx.post(webhook, json={"embeds":[embed]}, timeout=15).raise_for_status()
+
+
 def send_status(message: str):
     if not settings.send_status_alerts:
         return
