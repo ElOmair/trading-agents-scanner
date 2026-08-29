@@ -4,7 +4,7 @@ from urllib.parse import urlsplit
 import httpx
 
 from .config import settings
-from .crypto import AlpacaCryptoData, run_crypto_once
+from .crypto import AlpacaCryptoData, crypto_diagnostics, run_crypto_once
 from .database import init_db
 from .discord import send_status
 from .market_data import AlpacaMarketData
@@ -27,7 +27,7 @@ def main():
     p.add_argument(
         "command",
         choices=[
-            "doctor", "scan", "crypto-scan", "db-init",
+            "doctor", "scan", "crypto-scan", "crypto-debug", "db-init",
             "discord-test", "crypto-discord-test",
         ],
     )
@@ -46,7 +46,19 @@ def main():
     elif args.command == "scan":
         for i in run_once()[:20]: print(i.to_dict())
     elif args.command == "crypto-scan":
-        for i in run_crypto_once()[:20]: print(i.to_dict())
+        ideas = run_crypto_once()
+        if not ideas:
+            print("No crypto ideas met the current threshold.")
+        for i in ideas[:20]: print(i.to_dict())
+    elif args.command == "crypto-debug":
+        d = crypto_diagnostics()
+        print("crypto pairs:", d["pairs"])
+        print("pairs with 5m bars:", d["pairs_with_bars"])
+        print("technicals scored:", d["technicals"])
+        print("entry threshold:", d["threshold"])
+        print("top raw ideas:")
+        for i in d["top_ideas"]:
+            print(i.to_dict())
     elif args.command == "db-init":
         init_db(); print("database initialized")
     elif args.command == "discord-test":
