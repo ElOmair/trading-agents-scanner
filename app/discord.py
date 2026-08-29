@@ -11,6 +11,19 @@ def _color(score: float):
     return 0xFFD600
 
 
+def _crypto_price(value: float) -> str:
+    a = abs(value)
+    if a >= 100:
+        decimals = 2
+    elif a >= 1:
+        decimals = 4
+    elif a >= 0.01:
+        decimals = 6
+    else:
+        decimals = 8
+    return f"${value:,.{decimals}f}"
+
+
 def send_trade_alert(idea: TradeIdea):
     if settings.dry_run or not settings.discord_webhook_url:
         print(render_text(idea))
@@ -44,16 +57,17 @@ def send_crypto_alert(idea: TradeIdea):
     if settings.dry_run or not webhook:
         print("CRYPTO:", render_text(idea))
         return
+    conviction = "🔥 HIGH CONVICTION" if idea.score >= settings.crypto_high_conviction_score else "🟡 QUALIFIED"
     embed = {
         "title": f"🪙 {idea.score:.0f}/100 — {idea.symbol} {idea.direction}",
-        "description": f"**{idea.setup}** • **{idea.status}** • 24/7 crypto scanner",
+        "description": f"**{conviction}**\n**{idea.setup}** • **{idea.status}** • 24/7 crypto scanner",
         "color": _color(idea.score),
         "fields": [
-            {"name":"Current","value":f"${idea.current_price:,.4f}","inline":True},
-            {"name":"Entry","value":f"${idea.entry_low:,.4f} – ${idea.entry_high:,.4f}","inline":True},
-            {"name":"Stop","value":f"${idea.stop:,.4f}","inline":True},
-            {"name":"Target 1","value":f"${idea.target1:,.4f}","inline":True},
-            {"name":"Target 2","value":f"${idea.target2:,.4f}","inline":True},
+            {"name":"Current","value":_crypto_price(idea.current_price),"inline":True},
+            {"name":"Entry","value":f"{_crypto_price(idea.entry_low)} – {_crypto_price(idea.entry_high)}","inline":True},
+            {"name":"Stop","value":_crypto_price(idea.stop),"inline":True},
+            {"name":"Target 1","value":_crypto_price(idea.target1),"inline":True},
+            {"name":"Target 2","value":_crypto_price(idea.target2),"inline":True},
             {"name":"R:R","value":f"{idea.rr1:.1f}:1 / {idea.rr2:.1f}:1","inline":True},
             {"name":"Technical","value":f"{idea.technical_score:.0f}","inline":True},
             {"name":"Momentum","value":f"{idea.momentum_score:.0f}","inline":True},
