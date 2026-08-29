@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     alpaca_api_key: str = ""
     alpaca_secret_key: str = ""
     discord_webhook_url: str = ""
+    crypto_discord_webhook_url: str = ""
     openai_api_key: str = ""
     database_url: str = "sqlite:///./scanner.db"
 
@@ -20,6 +21,12 @@ class Settings(BaseSettings):
     scan_interval_minutes: int = 5
     research_cache_minutes: int = 30
     max_risk_dollars: float = 100
+
+    # Crypto runs continuously and uses the same deterministic indicators/scorer.
+    crypto_enabled: bool = True
+    crypto_scan_interval_minutes: int = 5
+    crypto_technical_limit: int = 20
+    crypto_min_entry_score: float = 80
 
     # Zero-cost default: deterministic market/entry scoring only.
     # Set TRADINGAGENTS_ENABLED=true later if an LLM provider is configured.
