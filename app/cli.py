@@ -1,5 +1,6 @@
 from __future__ import annotations
 import argparse
+from urllib.parse import urlsplit
 from .config import settings
 from .database import init_db
 from .discord import send_status
@@ -7,12 +8,23 @@ from .market_data import AlpacaMarketData
 from .pipeline import run_once
 
 
+def _database_summary(url: str) -> str:
+    try:
+        parsed = urlsplit(url)
+        host = parsed.hostname or "local"
+        db = (parsed.path or "").lstrip("/") or "default"
+        scheme = parsed.scheme or "unknown"
+        return f"{scheme}://{host}/{db}"
+    except Exception:
+        return "configured"
+
+
 def main():
     p = argparse.ArgumentParser(prog="ta-discord")
     p.add_argument("command", choices=["doctor", "scan", "db-init", "discord-test"])
     args = p.parse_args()
     if args.command == "doctor":
-        print("database:", settings.database_url.split("@")[0])
+        print("database:", _database_summary(settings.database_url))
         print("alpaca configured:", bool(settings.alpaca_api_key and settings.alpaca_secret_key))
         print("discord configured:", bool(settings.discord_webhook_url))
         print("openai configured:", bool(settings.openai_api_key))
