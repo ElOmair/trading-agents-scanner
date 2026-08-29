@@ -26,7 +26,9 @@ class Settings(BaseSettings):
     crypto_enabled: bool = True
     crypto_scan_interval_minutes: int = 5
     crypto_technical_limit: int = 20
-    crypto_min_entry_score: float = 80
+    crypto_min_entry_score: float = 75
+    crypto_min_technical_score: float = 65
+    crypto_high_conviction_score: float = 80
 
     # Zero-cost default: deterministic market/entry scoring only.
     # Set TRADINGAGENTS_ENABLED=true later if an LLM provider is configured.
