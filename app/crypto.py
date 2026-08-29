@@ -101,17 +101,14 @@ def _init_crypto_table():
 def _fingerprint(idea: TradeIdea) -> str:
     return (
         f"crypto:{idea.symbol}:{idea.direction}:{idea.setup}:"
-        f"{idea.entry_low:.4f}:{idea.entry_high:.4f}:{int(idea.score // 3)}"
+        f"{idea.entry_low:.8f}:{idea.entry_high:.8f}:{int(idea.score // 3)}"
     )
 
 
 def _save_new(idea: TradeIdea) -> bool:
     fp = _fingerprint(idea)
     with engine.begin() as c:
-        row = c.execute(
-            text("SELECT alerted FROM crypto_trade_ideas WHERE fingerprint=:fp"),
-            {"fp": fp},
-        ).fetchone()
+        row = c.execute(text("SELECT alerted FROM crypto_trade_ideas WHERE fingerprint=:fp"), {"fp": fp}).fetchone()
         if row:
             return False
         c.execute(
@@ -120,37 +117,62 @@ def _save_new(idea: TradeIdea) -> bool:
             VALUES(:fp,:s,:t,:sc,:st,:p,:a)
             """),
             {
-                "fp": fp,
-                "s": idea.symbol,
-                "t": datetime.now(timezone.utc),
-                "sc": idea.score,
-                "st": idea.status,
-                "p": json.dumps(idea.to_dict()),
-                "a": False,
+                "fp": fp, "s": idea.symbol, "t": datetime.now(timezone.utc),
+                "sc": idea.score, "st": idea.status,
+                "p": json.dumps(idea.to_dict()), "a": False,
             },
         )
     return True
 
 
+def _price_decimals(price: float) -> int:
+    if price >= 100:
+        return 2
+    if price >= 1:
+        return 4
+    if price >= 0.01:
+        return 6
+    return 8
+
+
+def _preferred_pairs(symbols: list[str]) -> list[str]:
+    """Keep one quote currency per base asset, preferring USD, then USDC, then USDT."""
+    priority = {"USD": 0, "USDC": 1, "USDT": 2}
+    chosen: dict[str, tuple[int, str]] = {}
+    for symbol in symbols:
+        if "/" not in symbol:
+            continue
+        base, quote = symbol.split("/", 1)
+        rank = priority.get(quote, 99)
+        current = chosen.get(base)
+        if current is None or rank < current[0]:
+            chosen[base] = (rank, symbol)
+    return sorted(v[1] for v in chosen.values())
+
+
 def crypto_diagnostics() -> dict:
     md = AlpacaCryptoData()
-    symbols = md.universe()
+    all_symbols = md.universe()
+    symbols = _preferred_pairs(all_symbols)
     bars = md.bars_5m(symbols)
     technicals = rank_technicals(bars, settings.crypto_technical_limit)
     research = ResearchResult("CRYPTO", "Hold", 55.0, "Zero-cost deterministic crypto mode")
     raw_ideas: list[TradeIdea] = []
     for t in technicals:
-        for idea in make_ideas(t, research, market_score=65):
+        decimals = _price_decimals(t.price)
+        for idea in make_ideas(t, research, market_score=65, price_decimals=decimals):
             idea.shares = 0
             if idea.status != "INVALID":
                 raw_ideas.append(idea)
     raw_ideas.sort(key=lambda x: x.score, reverse=True)
     return {
-        "pairs": len(symbols),
+        "pairs": len(all_symbols),
+        "preferred_pairs": len(symbols),
         "pairs_with_bars": len(bars),
         "technicals": len(technicals),
         "threshold": settings.crypto_min_entry_score,
-        "top_ideas": raw_ideas[:10],
+        "technical_threshold": settings.crypto_min_technical_score,
+        "top_ideas": raw_ideas[:20],
     }
 
 
@@ -160,6 +182,8 @@ def run_crypto_once() -> list[TradeIdea]:
     results: list[TradeIdea] = []
     for idea in diag["top_ideas"]:
         if idea.score < settings.crypto_min_entry_score:
+            continue
+        if idea.technical_score < settings.crypto_min_technical_score:
             continue
         if _save_new(idea):
             send_crypto_alert(idea)
