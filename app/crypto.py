@@ -99,7 +99,6 @@ def _init_crypto_table():
 
 
 def _fingerprint(idea: TradeIdea) -> str:
-    # Four decimals avoids collisions on lower-priced crypto pairs.
     return (
         f"crypto:{idea.symbol}:{idea.direction}:{idea.setup}:"
         f"{idea.entry_low:.4f}:{idea.entry_high:.4f}:{int(idea.score // 3)}"
@@ -133,21 +132,36 @@ def _save_new(idea: TradeIdea) -> bool:
     return True
 
 
-def run_crypto_once() -> list[TradeIdea]:
-    _init_crypto_table()
+def crypto_diagnostics() -> dict:
     md = AlpacaCryptoData()
     symbols = md.universe()
     bars = md.bars_5m(symbols)
     technicals = rank_technicals(bars, settings.crypto_technical_limit)
     research = ResearchResult("CRYPTO", "Hold", 55.0, "Zero-cost deterministic crypto mode")
-    results: list[TradeIdea] = []
+    raw_ideas: list[TradeIdea] = []
     for t in technicals:
         for idea in make_ideas(t, research, market_score=65):
-            # Crypto uses fractional positions, so stock share sizing is intentionally hidden.
             idea.shares = 0
-            if idea.score < settings.crypto_min_entry_score or idea.status == "INVALID":
-                continue
-            if _save_new(idea):
-                send_crypto_alert(idea)
-            results.append(idea)
+            if idea.status != "INVALID":
+                raw_ideas.append(idea)
+    raw_ideas.sort(key=lambda x: x.score, reverse=True)
+    return {
+        "pairs": len(symbols),
+        "pairs_with_bars": len(bars),
+        "technicals": len(technicals),
+        "threshold": settings.crypto_min_entry_score,
+        "top_ideas": raw_ideas[:10],
+    }
+
+
+def run_crypto_once() -> list[TradeIdea]:
+    _init_crypto_table()
+    diag = crypto_diagnostics()
+    results: list[TradeIdea] = []
+    for idea in diag["top_ideas"]:
+        if idea.score < settings.crypto_min_entry_score:
+            continue
+        if _save_new(idea):
+            send_crypto_alert(idea)
+        results.append(idea)
     return sorted(results, key=lambda x: x.score, reverse=True)
