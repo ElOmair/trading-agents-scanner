@@ -14,7 +14,12 @@ def _rr(entry: float, stop: float, target: float, direction: str) -> float:
     return reward / risk if risk > 0 else 0
 
 
-def make_ideas(t: TechnicalSnapshot, r: ResearchResult, market_score: float = 70) -> list[TradeIdea]:
+def make_ideas(
+    t: TechnicalSnapshot,
+    r: ResearchResult,
+    market_score: float = 70,
+    price_decimals: int = 2,
+) -> list[TradeIdea]:
     direction = t.direction
     atr = t.atr14
     price = t.price
@@ -66,11 +71,14 @@ def make_ideas(t: TechnicalSnapshot, r: ResearchResult, market_score: float = 70
         risk_per_share = abs(entry - stop)
         shares = math.floor(settings.max_risk_dollars / risk_per_share) if risk_per_share > 0 else 0
         ideas.append(TradeIdea(
-            symbol=t.symbol, direction=direction, setup=setup, entry_low=round(low,2), entry_high=round(high,2),
-            stop=round(stop,2), target1=round(t1,2), target2=round(t2,2), rr1=round(rr1,2), rr2=round(rr2,2),
-            score=round(clamp(score),1), status=status, current_price=round(price,2), technical_score=round(t.technical_score,1),
-            research_score=round(research_score,1), momentum_score=round(momentum,1), entry_location_score=round(entry_location,1),
-            risk_reward_score=round(rr_score,1), market_score=round(market_score,1), research_rating=r.rating,
+            symbol=t.symbol, direction=direction, setup=setup,
+            entry_low=round(low, price_decimals), entry_high=round(high, price_decimals),
+            stop=round(stop, price_decimals), target1=round(t1, price_decimals), target2=round(t2, price_decimals),
+            rr1=round(rr1,2), rr2=round(rr2,2), score=round(clamp(score),1), status=status,
+            current_price=round(price, price_decimals), technical_score=round(t.technical_score,1),
+            research_score=round(research_score,1), momentum_score=round(momentum,1),
+            entry_location_score=round(entry_location,1), risk_reward_score=round(rr_score,1),
+            market_score=round(market_score,1), research_rating=r.rating,
             research_summary=r.summary, shares=max(shares,0),
         ))
     return ideas
