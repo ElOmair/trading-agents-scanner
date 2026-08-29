@@ -21,7 +21,9 @@ class Settings(BaseSettings):
     research_cache_minutes: int = 30
     max_risk_dollars: float = 100
 
-    tradingagents_enabled: bool = True
+    # Zero-cost default: deterministic market/entry scoring only.
+    # Set TRADINGAGENTS_ENABLED=true later if an LLM provider is configured.
+    tradingagents_enabled: bool = False
     send_watch_alerts: bool = True
     send_status_alerts: bool = True
     dry_run: bool = False
