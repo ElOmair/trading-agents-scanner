@@ -10,7 +10,7 @@ from .models import Candidate
 
 
 class AlpacaMarketData:
-    trading_base = "https://api.alpaca.markets"
+    trading_base = "https://paper-api.alpaca.markets"
     data_base = "https://data.alpaca.markets"
 
     def __init__(self):
