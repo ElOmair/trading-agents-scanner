@@ -3,10 +3,11 @@ import argparse
 from urllib.parse import urlsplit
 import httpx
 
+from .btc15 import build_signal
 from .config import settings
 from .crypto import AlpacaCryptoData, crypto_diagnostics, run_crypto_once
 from .database import init_db
-from .discord import send_status
+from .discord import send_btc15_alert, send_status
 from .market_data import AlpacaMarketData
 from .pipeline import run_once
 
@@ -27,8 +28,8 @@ def main():
     p.add_argument(
         "command",
         choices=[
-            "doctor", "scan", "crypto-scan", "crypto-debug", "db-init",
-            "discord-test", "crypto-discord-test",
+            "doctor", "scan", "crypto-scan", "crypto-debug", "btc15-signal",
+            "btc15-alert", "db-init", "discord-test", "crypto-discord-test",
         ],
     )
     args = p.parse_args()
@@ -37,9 +38,11 @@ def main():
         print("alpaca configured:", bool(settings.alpaca_api_key and settings.alpaca_secret_key))
         print("discord configured:", bool(settings.discord_webhook_url))
         print("crypto discord configured:", bool(settings.crypto_discord_webhook_url))
+        print("btc15 discord configured:", bool(settings.btc15_discord_webhook_url or settings.crypto_discord_webhook_url))
         print("openai configured:", bool(settings.openai_api_key))
         print("tradingagents enabled:", settings.tradingagents_enabled)
         print("crypto enabled:", settings.crypto_enabled)
+        print("btc15 enabled:", settings.btc15_enabled)
         if settings.alpaca_api_key:
             md = AlpacaMarketData(); print("equity universe symbols:", len(md.universe()))
             cmd = AlpacaCryptoData(); print("crypto pairs:", len(cmd.universe()))
@@ -59,6 +62,14 @@ def main():
         print("top raw ideas:")
         for i in d["top_ideas"]:
             print(i.to_dict())
+    elif args.command == "btc15-signal":
+        signal = build_signal()
+        print(signal.to_dict())
+    elif args.command == "btc15-alert":
+        signal = build_signal()
+        print(signal.to_dict())
+        send_btc15_alert(signal)
+        print("BTC15 Discord alert sent")
     elif args.command == "db-init":
         init_db(); print("database initialized")
     elif args.command == "discord-test":
