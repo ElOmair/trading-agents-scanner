@@ -97,6 +97,41 @@ def send_crypto_alert(idea: TradeIdea):
     httpx.post(webhook, json={"embeds":[embed]}, timeout=15).raise_for_status()
 
 
+def send_btc15_alert(signal):
+    webhook = settings.btc15_discord_webhook_url or settings.crypto_discord_webhook_url
+    label = "🟢 MODEL EDGE" if signal.actionable else "⚪ WATCH ONLY"
+    color = 0x00C853 if signal.actionable else 0xFFD600
+    embed = {
+        "title": f"₿ BTC 15m — {signal.direction} {signal.confidence:.1f}%",
+        "description": (
+            f"**{label}**\n"
+            f"Window ends <t:{int(datetime.fromisoformat(signal.window_end).timestamp())}:R>\n"
+            f"Reference: **BTC/USD proxy** until an official BRTI feed is connected"
+        ),
+        "color": color,
+        "fields": [
+            {"name":"Window open proxy","value":f"${signal.reference_open:,.2f}","inline":True},
+            {"name":"Current BTC","value":f"${signal.current_price:,.2f}","inline":True},
+            {"name":"Move vs open","value":f"{signal.move_from_open_pct:+.3f}%","inline":True},
+            {"name":"Model probability","value":f"{signal.direction} **{signal.probability*100:.1f}%**","inline":True},
+            {"name":"Fair contract value","value":f"**{signal.fair_price_cents:.1f}¢**","inline":True},
+            {"name":"Max price for 5¢ edge","value":f"**{signal.max_buy_price_cents:.1f}¢**","inline":True},
+            {"name":"1m realized vol","value":f"{signal.realized_vol_1m_pct:.4f}%","inline":True},
+            {"name":"3m momentum","value":f"{signal.momentum_3m_pct:+.4f}%","inline":True},
+            {"name":"Order-book imbalance","value":f"{signal.orderbook_imbalance:+.3f}","inline":True},
+            {"name":"Reason","value":signal.reason or "—","inline":False},
+        ],
+        "footer": {
+            "text": "Probability research only. BRTI settles the market; this proxy can diverge. No bet/order was placed."
+        },
+        "timestamp": datetime.utcnow().isoformat(),
+    }
+    if settings.dry_run or not webhook:
+        print("BTC15:", signal.to_dict())
+        return
+    httpx.post(webhook, json={"embeds":[embed]}, timeout=15).raise_for_status()
+
+
 def send_status(message: str):
     if not settings.send_status_alerts:
         return
