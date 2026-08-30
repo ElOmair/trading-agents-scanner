@@ -41,6 +41,9 @@ class Settings(BaseSettings):
     btc15_min_seconds_remaining: int = 90
     btc15_max_seconds_remaining: int = 600
     btc15_alert_once_per_window: bool = True
+    btc15_max_risk_dollars: float = 10.0
+    btc15_exit_probability: float = 0.55
+    btc15_take_profit_discount_cents: float = 2.0
 
     # Zero-cost default: deterministic market/entry scoring only.
     # Set TRADINGAGENTS_ENABLED=true later if an LLM provider is configured.
