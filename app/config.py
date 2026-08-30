@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     alpaca_secret_key: str = ""
     discord_webhook_url: str = ""
     crypto_discord_webhook_url: str = ""
+    btc15_discord_webhook_url: str = ""
     openai_api_key: str = ""
     database_url: str = "sqlite:///./scanner.db"
 
@@ -29,6 +30,17 @@ class Settings(BaseSettings):
     crypto_min_entry_score: float = 75
     crypto_min_technical_score: float = 65
     crypto_high_conviction_score: float = 80
+
+    # BTC 15-minute prediction research. BRTI is the settlement benchmark, but the
+    # public CF Benchmarks web page must not be scraped. This engine uses Alpaca
+    # BTC/USD as a live proxy unless an official/licensed benchmark feed is added.
+    btc15_enabled: bool = True
+    btc15_poll_seconds: int = 30
+    btc15_min_confidence: float = 64
+    btc15_min_edge: float = 0.05
+    btc15_min_seconds_remaining: int = 90
+    btc15_max_seconds_remaining: int = 600
+    btc15_alert_once_per_window: bool = True
 
     # Zero-cost default: deterministic market/entry scoring only.
     # Set TRADINGAGENTS_ENABLED=true later if an LLM provider is configured.
