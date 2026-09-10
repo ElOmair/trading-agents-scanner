@@ -62,6 +62,7 @@ class DexScreenerData:
         self.client = httpx.Client(
             timeout=30.0,
             headers={"User-Agent": "trading-agents-scanner/2.1"},
+            trust_env=False,
         )
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(min=1, max=8))
