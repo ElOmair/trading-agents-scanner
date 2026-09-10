@@ -114,7 +114,7 @@ def send_meme_alert(idea):
             {"name":"Risk plan","value":f"Stop reference -{idea.stop_pct:.0f}%","inline":True},
             {"name":"Targets","value":f"+{idea.target1_pct:.0f}% / +{idea.target2_pct:.0f}%","inline":True},
             {"name":"Pair age","value":f"{idea.pair_age_hours:.1f} hours","inline":True},
-            {"name":"Contract — copy this into Fomo","value":f"\`{idea.token_address}\`","inline":False},
+            {"name":"Contract — copy this into Fomo","value":f"`{idea.token_address}`","inline":False},
             {"name":"Checks still required","value":warnings[:1024],"inline":False},
         ],
         "footer":{"text":"Open Fomo, search the exact contract, review holders/security, then approve manually."},
