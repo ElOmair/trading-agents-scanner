@@ -90,6 +90,50 @@ def send_crypto_alert(idea: TradeIdea):
     httpx.post(webhook,json={"embeds":[embed]},timeout=15).raise_for_status()
 
 
+def send_meme_alert(idea):
+    webhook = settings.crypto_discord_webhook_url
+    if settings.dry_run or not webhook:
+        print("MEME:", idea.to_dict())
+        return
+    warnings = "\n".join(f"• {warning}" for warning in idea.warnings)
+    embed = {
+        "title": f"🚨 MEME {idea.quality} — {idea.symbol} — {idea.score:.0f}/100",
+        "description": (
+            f"**ACTION: {idea.action}**\n"
+            f"**Suggested amount: ${idea.suggested_dollars:.0f} max**\n"
+            "Manual approval required — no order was placed."
+        ),
+        "color": _color(idea.score),
+        "fields": [
+            {"name":"Chain / DEX","value":f"{idea.chain} / {idea.dex}","inline":True},
+            {"name":"Price","value":_crypto_price(idea.price_usd),"inline":True},
+            {"name":"Liquidity","value":f"${idea.liquidity_usd:,.0f}","inline":True},
+            {"name":"1h volume","value":f"${idea.volume_1h:,.0f}","inline":True},
+            {"name":"1h flow","value":f"{idea.buys_1h} buys / {idea.sells_1h} sells","inline":True},
+            {"name":"1h / 24h move","value":f"{idea.change_1h_pct:+.1f}% / {idea.change_24h_pct:+.1f}%","inline":True},
+            {"name":"Risk plan","value":f"Stop reference -{idea.stop_pct:.0f}%","inline":True},
+            {"name":"Targets","value":f"+{idea.target1_pct:.0f}% / +{idea.target2_pct:.0f}%","inline":True},
+            {"name":"Pair age","value":f"{idea.pair_age_hours:.1f} hours","inline":True},
+            {"name":"Contract — copy this into Fomo","value":f"\`{idea.token_address}\`","inline":False},
+            {"name":"Checks still required","value":warnings[:1024],"inline":False},
+        ],
+        "footer":{"text":"Open Fomo, search the exact contract, review holders/security, then approve manually."},
+        "timestamp":datetime.utcnow().isoformat(),
+    }
+    components = [{
+        "type": 1,
+        "components": [
+            {"type": 2, "style": 5, "label": "Open Fomo", "url": settings.fomo_app_url},
+            {"type": 2, "style": 5, "label": "Verify Chart", "url": idea.pair_url},
+        ],
+    }]
+    httpx.post(
+        webhook,
+        json={"embeds":[embed], "components":components},
+        timeout=15,
+    ).raise_for_status()
+
+
 def send_btc15_alert(signal):
     webhook = settings.btc15_discord_webhook_url or settings.crypto_discord_webhook_url
     label = "🟢 MODEL EDGE" if signal.actionable else "⚪ WATCH ONLY"
