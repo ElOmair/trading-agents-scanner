@@ -7,6 +7,7 @@ from .btc15 import build_signal
 from .config import settings
 from .crypto import run_crypto_once
 from .discord import send_btc15_alert, send_status
+from .meme import run_meme_once
 from .pipeline import run_once
 
 
@@ -20,6 +21,7 @@ def main():
     last_equity_run = 0.0
     last_crypto_run = 0.0
     last_btc15_poll = 0.0
+    last_meme_run = 0.0
     last_btc15_alert_window: str | None = None
 
     while True:
@@ -45,6 +47,16 @@ def main():
                 send_status(f"crypto scan error: `{type(exc).__name__}: {str(exc)[:250]}`")
             finally:
                 last_crypto_run = mono
+
+        if settings.meme_enabled and mono - last_meme_run >= max(settings.meme_scan_interval_minutes, 1) * 60:
+            try:
+                meme_ideas = run_meme_once()
+                print(f"{now.isoformat()} meme scan complete: {len(meme_ideas)} qualifying ideas")
+            except Exception as exc:
+                print(f"meme scan failed: {type(exc).__name__}: {exc}")
+                send_status(f"meme scan error: `{type(exc).__name__}: {str(exc)[:250]}`")
+            finally:
+                last_meme_run = mono
 
         if settings.btc15_enabled and mono - last_btc15_poll >= max(settings.btc15_poll_seconds, 10):
             try:

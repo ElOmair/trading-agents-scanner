@@ -84,3 +84,27 @@ A unique fingerprint consists of symbol + direction + setup + entry zone + coars
 ## Safety / scope
 
 This application produces research signals only. It has no broker-order module. `Suggested shares` is derived from `MAX_RISK_DOLLARS` and modeled stop distance; it is not an instruction to trade.
+
+## Semi-automated Fomo meme alerts
+
+The meme lane discovers promoted/trending tokens using public DexScreener data, applies
+minimum liquidity, volume, activity, age, flow, and momentum filters, and posts a
+scored alert to the crypto Discord webhook.
+
+Each alert includes:
+
+- an action-first status and a small suggested dollar cap;
+- the exact chain and contract address;
+- liquidity, volume, transaction flow, momentum, stop reference, and targets;
+- **Open Fomo** and **Verify Chart** buttons.
+
+Fomo does not expose a documented trading API or verified token deep-link. The button
+therefore opens Fomo, where the contract address must be searched and the transaction
+reviewed manually. The scanner never stores a wallet key and never creates or signs a trade.
+
+Test before enabling:
+
+```bash
+ta-discord meme-debug
+ta-discord meme-scan
+```

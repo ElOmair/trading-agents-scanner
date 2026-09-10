@@ -9,6 +9,7 @@ from .crypto import AlpacaCryptoData, crypto_diagnostics, run_crypto_once
 from .database import init_db
 from .discord import send_btc15_alert, send_status
 from .market_data import AlpacaMarketData
+from .meme import run_meme_once, scan_meme_candidates
 from .pipeline import run_once
 
 
@@ -28,7 +29,7 @@ def main():
     p.add_argument(
         "command",
         choices=[
-            "doctor", "scan", "crypto-scan", "crypto-debug", "btc15-signal",
+            "doctor", "scan", "crypto-scan", "crypto-debug", "meme-scan", "meme-debug", "btc15-signal",
             "btc15-alert", "db-init", "discord-test", "crypto-discord-test",
         ],
     )
@@ -43,6 +44,7 @@ def main():
         print("tradingagents enabled:", settings.tradingagents_enabled)
         print("crypto enabled:", settings.crypto_enabled)
         print("btc15 enabled:", settings.btc15_enabled)
+        print("meme enabled:", settings.meme_enabled)
         if settings.alpaca_api_key:
             md = AlpacaMarketData(); print("equity universe symbols:", len(md.universe()))
             cmd = AlpacaCryptoData(); print("crypto pairs:", len(cmd.universe()))
@@ -62,6 +64,12 @@ def main():
         print("top raw ideas:")
         for i in d["top_ideas"]:
             print(i.to_dict())
+    elif args.command in {"meme-scan", "meme-debug"}:
+        ideas = run_meme_once() if args.command == "meme-scan" else scan_meme_candidates()
+        if not ideas:
+            print("No meme ideas met the current safety and score filters.")
+        for idea in ideas:
+            print(idea.to_dict())
     elif args.command == "btc15-signal":
         signal = build_signal()
         print(signal.to_dict())

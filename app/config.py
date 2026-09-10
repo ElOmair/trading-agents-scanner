@@ -31,6 +31,23 @@ class Settings(BaseSettings):
     crypto_min_technical_score: float = 65
     crypto_high_conviction_score: float = 80
 
+    # High-risk meme discovery; alerts always require manual execution in Fomo.
+    meme_enabled: bool = True
+    meme_scan_interval_minutes: int = 10
+    meme_candidate_limit: int = 40
+    meme_alert_limit: int = 5
+    meme_min_alert_score: float = 72
+    meme_high_conviction_score: float = 82
+    meme_min_liquidity_usd: float = 50_000
+    meme_min_volume_1h_usd: float = 25_000
+    meme_min_txns_1h: int = 40
+    meme_b_size_dollars: float = 10
+    meme_a_size_dollars: float = 20
+    meme_stop_pct: float = 15
+    meme_target1_pct: float = 25
+    meme_target2_pct: float = 50
+    fomo_app_url: str = "https://fomo.family/"
+
     # BTC 15-minute prediction research. BRTI is the settlement benchmark, but the
     # public CF Benchmarks web page must not be scraped. This engine uses Alpaca
     # BTC/USD as a live proxy unless an official/licensed benchmark feed is added.
