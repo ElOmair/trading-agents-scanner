@@ -54,7 +54,7 @@ def main():
                 print(f"{now.isoformat()} meme scan complete: {len(meme_ideas)} qualifying ideas")
             except Exception as exc:
                 print(f"meme scan failed: {type(exc).__name__}: {exc}")
-                send_status(f"meme scan error: \`{type(exc).__name__}: {str(exc)[:250]}\`")
+                send_status(f"meme scan error: `{type(exc).__name__}: {str(exc)[:250]}`")
             finally:
                 last_meme_run = mono
 
